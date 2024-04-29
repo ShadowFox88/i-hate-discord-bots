@@ -1,0 +1,37 @@
+name: i-hate-discord-bots
+
+services:
+    database:
+        image: postgres:16.2-alpine
+        healthcheck:
+            test: "pg_isready -d $POSTGRES_DATABASE -U $POSTGRES_USER"
+            interval: 10s
+            timeout: 5s
+            retries: 6
+        restart: always
+        shm_size: 128mb
+        env_file:
+            - .env
+        environment:
+            POSTGRES_DB: ${POSTGRES_DATABASE}
+        networks:
+            - backend
+        volumes:
+            - database:/var/lib/postgresql
+
+    bot:
+        depends_on:
+            database:
+                condition: service_healthy
+        build:
+            context: .
+        restart: always
+        networks:
+            - backend
+
+networks:
+    backend:
+        driver: bridge
+
+volumes:
+    database:

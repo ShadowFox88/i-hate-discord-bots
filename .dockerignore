@@ -1,0 +1,7 @@
+**/__pycache__
+.devcontainer
+.gitignore
+.sourcery.yaml
+LICENSE
+pyproject.toml
+README.md
