@@ -1,4 +1,5 @@
 FROM python:3.12-alpine
+ENV PYTHONUNBUFFERED=true
 WORKDIR /usr/src/app
 
 COPY requirements.txt .
