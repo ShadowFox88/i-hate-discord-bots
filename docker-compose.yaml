@@ -3,12 +3,10 @@ name: i-hate-discord-bots
 services:
     database:
         image: postgres:16.2-alpine
-        # TODO: Check 20x over 3s round bursts
         healthcheck:
             test: "pg_isready -d $POSTGRES_DATABASE -U $POSTGRES_USER"
-            interval: 10s
-            timeout: 5s
-            retries: 6
+            interval: 1s
+            retries: 100
         restart: always
         shm_size: 128mb
         env_file:
