@@ -36,13 +36,16 @@ class Pinboard(commands.Cog):
                 generated_descriptions += f"{row.channel_id}\n"
 
         if not generated_descriptions:
+            # TODO: Create or use a third-party module that allows me to
+            # reference these emojis by name and provides auto-complete instead
+            # of relying on strings that could potentially be misspelled/misremembered
             generated_descriptions = (
-                "\N{CROSS} You do not have any pinboards registered in this server!\n"
+                "\N{CROSS MARK} You do not have any pinboards registered in this server!\n"
                 "\n"
-                "\N{SPEECH BUBBLE}\N{VARIATION SELECTOR 16} \N{ROBOT FACE} To create one, use `pinboard create #channel`, where `#channel` is the text channel to transform into a pinboard."
+                "\N{LEFT SPEECH BUBBLE}\N{VARIATION SELECTOR-16} \N{ROBOT FACE} To create one, use `pinboard create #channel`, where `#channel` is the text channel to transform into a pinboard."
             )
 
-        embed = discord.Embed(title="{PUSHPIN} Pinboards", description=generated_descriptions)
+        embed = discord.Embed(title="\N{PUSHPIN} Pinboards", description=generated_descriptions)
 
         await context.send(embed=embed, view=view)
 
