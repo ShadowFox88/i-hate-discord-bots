@@ -3,6 +3,7 @@ name: i-hate-discord-bots
 services:
     database:
         image: postgres:16.2-alpine
+        # TODO: Check 20x over 3s round bursts
         healthcheck:
             test: "pg_isready -d $POSTGRES_DATABASE -U $POSTGRES_USER"
             interval: 10s
@@ -14,8 +15,6 @@ services:
             - .env
         environment:
             POSTGRES_DB: ${POSTGRES_DATABASE}
-        networks:
-            - backend
         volumes:
             - database:/var/lib/postgresql
 
@@ -26,12 +25,6 @@ services:
         build:
             context: .
         restart: always
-        networks:
-            - backend
-
-networks:
-    backend:
-        driver: bridge
 
 volumes:
     database:
