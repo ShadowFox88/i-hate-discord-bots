@@ -35,10 +35,7 @@ INTENTS = discord.Intents(
 def pluralise(text: str):
     case_agnostic = text.lower()
 
-    if case_agnostic.endswith("s"):
-        return text
-
-    return f"{text}s"
+    return text if case_agnostic.endswith("s") else f"{text}s"
 
 
 class Bot(commands.Bot):
