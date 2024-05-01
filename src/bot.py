@@ -42,7 +42,7 @@ def pluralise(text: str):
 
 
 class Bot(commands.Bot):
-    def __init__(self, *, database: Database):
+    def __init__(self, *, database: Database | None = None):
         super().__init__(
             command_prefix=commands.when_mentioned_or(
                 *(f"{prefix} " for prefix in [*BALLS_SYNONYMS, *I18N_BALLS_SYNONYMS, *map(pluralise, BALLS_SYNONYMS)])
@@ -50,8 +50,9 @@ class Bot(commands.Bot):
             intents=INTENTS,
         )
 
-        self.database = database
-        self.sessions = database.session_manager
+        if database:
+            self.database = database
+            self.sessions = database.session_manager
 
     async def load_extensions(self):
         folder_path = "src/extensions"
@@ -63,6 +64,7 @@ class Bot(commands.Bot):
         for module_info in pkgutil.walk_packages([folder_path], prefix=f"{folder_path_as_module}."):
             module_path = module_info.name
 
+            # TODO: Override this and other related methods to log during operations
             try:
                 await self.load_extension(module_path)
             except Exception as error:

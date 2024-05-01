@@ -8,6 +8,7 @@ import sqlalchemy.ext.asyncio as async_sqlalchemy
 from discord.ext import commands
 
 # from src.database import tables
+from src.checks import depends_on
 from src.database import tables
 from src.views import Pinboards
 
@@ -20,6 +21,7 @@ class Pinboard(commands.Cog):
         self.bot = bot
 
     @commands.group()
+    @depends_on("database")
     async def pinboard(self, context: Context):
         view = Pinboards(author=context.author)
         generated_descriptions = ""

@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import socket
 import typing
 
 import sqlalchemy
+
+from src.errors import CannotConnect
 
 if typing.TYPE_CHECKING:
     from .core import Database
@@ -32,5 +35,13 @@ LINKED_CHANNEL_IDS = sqlalchemy.Table(
 
 
 async def maybe_create(database: "Database"):
-    async with database.driver.begin() as connection:
-        await connection.run_sync(METADATA.create_all)
+    try:
+        async with database.driver.begin() as connection:
+            await connection.run_sync(METADATA.create_all)
+    # This error is raised when the database is not running and a connection is
+    # being established regardless, leading to an attempt at connecting to
+    # nothing (lol)
+    except socket.gaierror:
+        raise CannotConnect from None
+    except Exception as error:
+        raise CannotConnect from error

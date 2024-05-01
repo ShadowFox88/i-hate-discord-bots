@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 import sqlalchemy.ext.asyncio as async_sqlalchemy
 
@@ -10,7 +11,7 @@ __all__ = ("Database",)
 
 # TODO: Either this needs to be a module or the design needs to be re-thought
 class Database:
-    async def _retrieve_driver(self) -> Driver | None:
+    async def _connect_to_driver(self) -> Driver | None:
         for retry_count in range(1, 6):
             try:
                 return async_sqlalchemy.create_async_engine(
@@ -30,18 +31,18 @@ class Database:
         self.driver: Driver
         self.session_manager: SessionManager
 
-        self._driver_retrieved = asyncio.Event()
+        self._driver_connected = asyncio.Event()
 
         asyncio.create_task(self.__ainit__())
 
     async def __ainit__(self):
-        driver_retrieved = await self._retrieve_driver()
+        if driver_connected := await self._connect_to_driver():
+            self.driver = driver_connected
+            self.session_manager = async_sqlalchemy.async_sessionmaker(driver_connected)
+        else:
+            print("Failed to initialise database", file=sys.stderr)
 
-        if driver_retrieved:
-            self.driver = driver_retrieved
-            self.session_manager = async_sqlalchemy.async_sessionmaker(bind=self.driver)
-
-        self._driver_retrieved.set()
+        self._driver_connected.set()
 
     async def wait_until_ready(self):
-        await self._driver_retrieved.wait()
+        await self._driver_connected.wait()
