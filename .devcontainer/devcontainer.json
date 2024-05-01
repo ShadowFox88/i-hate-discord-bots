@@ -8,12 +8,16 @@
         "vscode": {
             "extensions": [
                 "Gruntfuggly.todo-tree",
-                "johnpapa.vscode-cloak"
+                "TabNine.tabnine-vscode",
+                "henriiik.vscode-sort",
+                "johnpapa.vscode-cloak",
                 "ms-python.black-formatter",
                 "ms-python.isort",
                 "ms-python.python",
                 "ms-python.vscode-pylance",
                 "sourcery.sourcery",
+                "streetsidesoftware.code-spell-checker",
+                "tamasfe.even-better-toml"
             ]
         }
     },
