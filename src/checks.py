@@ -10,7 +10,6 @@ def depends_on(*features_: Feature):
         if (database := features.get("database")) in features_ and flags.is_set("NO_DATABASE"):
             raise UnavailableFeature(database)
 
-        print("Can run")
         return (_CAN_RUN := True)
 
     return commands.check(predicate)
