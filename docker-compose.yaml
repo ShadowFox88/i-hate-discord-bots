@@ -16,6 +16,23 @@ services:
         volumes:
             - database:/var/lib/postgresql
 
+    database-admin-panel:
+        depends_on:
+            database:
+                condition: service_healthy
+        image: elestio/pgadmin:REL-8_0
+        profiles:
+            - pgadmin
+        restart: always
+        environment:
+            PGADMIN_DEFAULT_EMAIL: example@example.com
+            PGADMIN_DEFAULT_PASSWORD: pgadmin
+            PGADMIN_LISTEN_PORT: 8080
+        ports:
+            - "8080:8080"
+        volumes:
+            - database:/pgadmin4/servers.json
+
     bot:
         depends_on:
             database:
