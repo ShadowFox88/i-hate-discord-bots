@@ -64,7 +64,7 @@ class ErrorHandler(commands.Cog):
     def generate_ignore_error_messages(self, error: commands.CommandError) -> ErrorMessages:
         for_terminal = f"Ignoring error {error.__class__.__name__}"
 
-        if addendum := getattr(error, "message"):
+        if addendum := getattr(error, "message", None):
             for_terminal += f" ({addendum})"
 
         return f"{for_terminal}...", None
