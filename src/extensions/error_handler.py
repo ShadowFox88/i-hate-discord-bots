@@ -9,7 +9,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from src.errors import BaseError, CheckError, UnavailableFeature
+from src.errors import CheckError, UnavailableFeature
 
 if typing.TYPE_CHECKING:
     from src import Bot, Context
@@ -24,7 +24,10 @@ class ErrorHandler(commands.Cog):
     def __init__(self, bot: "Bot"):
         self.bot = bot
 
-        self.ignored: tuple[type[BaseError]] = (CheckError,)
+        self.ignored = (
+            CheckError,
+            commands.CommandNotFound,
+        )
 
     def codeblock(self, code: str, *, language: Language | None = None):
         real_language = language or ""
