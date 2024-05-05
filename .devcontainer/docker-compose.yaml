@@ -8,6 +8,7 @@ services:
             - ..:/workspace:cached
         command: sleep infinity
         network_mode: service:database
+
     database:
         image: postgres:16.2-alpine
         restart: always
