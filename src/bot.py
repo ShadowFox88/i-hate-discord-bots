@@ -7,6 +7,8 @@ import typing
 import discord
 from discord.ext import commands
 
+from src.constants import PREFIXES
+
 if typing.TYPE_CHECKING:
     from src import Database
 
@@ -41,9 +43,7 @@ def pluralise(text: str):
 class Bot(commands.Bot):
     def __init__(self, *, database: Database | None = None):
         super().__init__(
-            command_prefix=commands.when_mentioned_or(
-                *(f"{prefix} " for prefix in [*BALLS_SYNONYMS, *I18N_BALLS_SYNONYMS, *map(pluralise, BALLS_SYNONYMS)])
-            ),
+            command_prefix=commands.when_mentioned_or(*PREFIXES),
             intents=INTENTS,
         )
 
