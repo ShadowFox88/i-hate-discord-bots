@@ -21,13 +21,25 @@ type ErrorMessages = tuple[TerminalOutput, UserMessage]
 
 
 class ErrorHandler(commands.Cog):
+    async def on_error(self, error: str, *_args: typing.Any, **_kwargs: typing.Any):
+        stack = traceback.format_exception(*sys.exc_info())
+
+        print("An error occurred:\n\n", *stack, file=sys.stderr, sep="")
+
     def __init__(self, bot: "Bot"):
+        _original_on_error = bot.on_error
+        bot.on_error = self.on_error
+
         self.bot = bot
 
+        self._original_on_error = _original_on_error
         self.ignored = (
             CheckError,
             commands.CommandNotFound,
         )
+
+    def teardown(self):
+        self.bot.on_error = self._original_on_error
 
     def codeblock(self, code: str, *, language: Language | None = None):
         real_language = language or ""
@@ -119,5 +131,17 @@ class ErrorHandler(commands.Cog):
         await self.try_report_error(context, terminal_output, message)
 
 
+COG: ErrorHandler | None = None
+
+
 async def setup(bot: "Bot"):
-    await bot.add_cog(ErrorHandler(bot))
+    COG = ErrorHandler(bot)
+
+    await bot.add_cog(COG)
+
+
+async def teardown(bot: "Bot"):
+    if not COG:
+        return
+
+    COG.teardown()
