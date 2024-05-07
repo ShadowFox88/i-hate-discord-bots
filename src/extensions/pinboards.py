@@ -88,7 +88,7 @@ class Pinboards(commands.Cog):
         if context.invoked_subcommand:
             return
 
-        view = views.Pinboards(author=context.author)
+        view = views.Delete(author=context.author)
         generated_descriptions = ""
 
         async with async_sqlalchemy.AsyncSession(self.bot.database.driver) as session:

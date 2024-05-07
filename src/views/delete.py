@@ -3,7 +3,7 @@ import typing
 import discord
 
 
-class Pinboards(discord.ui.View):
+class Delete(discord.ui.View):
     def __init__(self, *, author: discord.Member):
         super().__init__()
 

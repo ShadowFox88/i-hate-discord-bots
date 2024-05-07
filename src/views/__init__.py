@@ -1,1 +1,1 @@
-from .pinboards import *
+from .delete import *
