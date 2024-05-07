@@ -23,8 +23,8 @@ class Pins(commands.Cog):
         "\N{DIGIT EIGHT}\N{VARIATION SELECTOR-16}\N{COMBINING ENCLOSING KEYCAP}",
         "\N{DIGIT NINE}\N{VARIATION SELECTOR-16}\N{COMBINING ENCLOSING KEYCAP}",
     )
-    LEFT_ARROW_EMOJI = "\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}"
-    RIGHT_ARROW_EMOJI = "\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}"
+    EMOJI_LEFT_ARROW = "\N{LEFTWARDS BLACK ARROW}\N{VARIATION SELECTOR-16}"
+    EMOJI_RIGHT_ARROW = "\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}"
 
     def __init__(self, bot: "Bot"):
         self.bot = bot
@@ -64,7 +64,7 @@ class Pins(commands.Cog):
         response = await channel.send(embed=embed)
         selected: discord.TextChannel | None = None
 
-        await response.add_reaction(self.LEFT_ARROW_EMOJI)
+        await response.add_reaction(self.EMOJI_LEFT_ARROW)
 
         # FIXME: There has to be a better way
         for index in range(current_page.find("\n") + 1):
@@ -72,7 +72,7 @@ class Pins(commands.Cog):
 
             await response.add_reaction(emoji)
 
-        await response.add_reaction(self.RIGHT_ARROW_EMOJI)
+        await response.add_reaction(self.EMOJI_RIGHT_ARROW)
 
         while not selected:
             if current_page_number != previous_page_number:
@@ -84,18 +84,18 @@ class Pins(commands.Cog):
             reaction, user = await self.bot.wait_for(
                 "reaction_add",
                 check=lambda reaction, user: (
-                    reaction.emoji in [self.LEFT_ARROW_EMOJI, self.RIGHT_ARROW_EMOJI] or reaction.emoji in self.EMOJI_DIGITS
+                    reaction.emoji in [self.EMOJI_LEFT_ARROW, self.EMOJI_RIGHT_ARROW] or reaction.emoji in self.EMOJI_DIGITS
                 )
                 and user == author,
                 timeout=60,
             )
 
             # sourcery skip: simplify-numeric-comparison
-            if reaction.emoji == self.LEFT_ARROW_EMOJI and (_can_navigate := current_page_number - 1 >= 0):
+            if reaction.emoji == self.EMOJI_LEFT_ARROW and (_can_navigate := current_page_number - 1 >= 0):
                 current_page_number -= 1
 
                 await response.remove_reaction(reaction.emoji, user)
-            elif reaction.emoji == self.RIGHT_ARROW_EMOJI and (_can_navigate := current_page_number + 1 <= TOTAL_PAGES - 1):
+            elif reaction.emoji == self.EMOJI_RIGHT_ARROW and (_can_navigate := current_page_number + 1 <= TOTAL_PAGES - 1):
                 current_page_number += 1
 
                 await response.remove_reaction(reaction.emoji, user)
