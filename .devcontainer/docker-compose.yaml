@@ -1,3 +1,5 @@
+# TODO: Figure out a way to define the database once in a separate compose file
+# then extend this compose file with it for unified changes to the database
 name: devcontainer
 
 services:

@@ -1,5 +1,6 @@
-__all__ = ("PREFIXES",)
+__all__ = ("HOME_GUILD_ID", "PREFIXES")
 
+HOME_GUILD_ID = 774561547930304536
 IMAGINARY_BALLS_SYNONYMS = ["rolleo"]
 BALLS_SYNONYMS = [
     "ball",

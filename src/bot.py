@@ -13,31 +13,9 @@ if typing.TYPE_CHECKING:
     from src import Database
 
 __all__ = ("Bot",)
-IMAGINARY_BALLS_SYNONYMS = ["rolleo"]
-BALLS_SYNONYMS = [
-    "ball",
-    "testicle",
-    "nut",
-    "family jewel",
-    "ballock",
-    "gonad",
-    "male genital",
-    "rock",
-    "stone",
-    "teste",
-    "genital",
-    *IMAGINARY_BALLS_SYNONYMS,
-]
-I18N_BALLS_SYNONYMS = ["testicolo", "testicoli"]
 INTENTS = discord.Intents(
-    guild_messages=True, guild_reactions=True, guilds=True, members=True, message_content=True, messages=True, reactions=True
+    guild_messages=True, guild_reactions=True, guilds=True, members=True, message_content=True, reactions=True
 )
-
-
-def pluralise(text: str):
-    case_agnostic = text.lower()
-
-    return text if case_agnostic.endswith("s") else f"{text}s"
 
 
 class Bot(commands.Bot):
@@ -78,9 +56,3 @@ class Bot(commands.Bot):
 
         if self.user:
             print(self.user.name)
-
-    async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        if _message_was_pinned := before.pinned is False and after.pinned is True:
-            pass
-        else:
-            pass

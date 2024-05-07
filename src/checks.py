@@ -1,14 +1,20 @@
+from __future__ import annotations
+
+import typing
+
 from discord.ext import commands
 
-from src import Context, features, flags
-from src.errors import UnavailableFeature
-from src.typings import Feature
+from src import errors, features, flags
+
+if typing.TYPE_CHECKING:
+    from src import Context
+    from src.typings import Feature
 
 
-def depends_on(*features_: Feature):
+def depends_on(*features_: "Feature"):
     async def predicate(_: Context):
         if (database := features.get("database")) in features_ and flags.is_set("NO_DATABASE"):
-            raise UnavailableFeature(database)
+            raise errors.UnavailableFeature(database)
 
         return (_CAN_RUN := True)
 

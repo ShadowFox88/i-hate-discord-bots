@@ -9,7 +9,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from src.errors import CheckError, UnavailableFeature
+from src import errors
 
 if typing.TYPE_CHECKING:
     from src import Bot, Context
@@ -34,7 +34,7 @@ class ErrorHandler(commands.Cog):
 
         self._original_on_error = _original_on_error
         self.ignored = (
-            CheckError,
+            errors.CheckError,
             commands.CommandNotFound,
         )
 
@@ -81,7 +81,7 @@ class ErrorHandler(commands.Cog):
 
         return f"{for_terminal}...", None
 
-    def generate_unavailable_feature_messages(self, context: "Context", error: UnavailableFeature) -> ErrorMessages:
+    def generate_unavailable_feature_messages(self, context: "Context", error: errors.UnavailableFeature) -> ErrorMessages:
         for_terminal, _ = self.generate_ignore_error_messages(error)
         command_name = context.command.qualified_name if context.command else "unavailable"
         unavailable_dependencies = error.message
@@ -120,7 +120,7 @@ class ErrorHandler(commands.Cog):
         terminal_output: TerminalOutput = None
         message: UserMessage = None
 
-        if isinstance(error, UnavailableFeature):
+        if isinstance(error, errors.UnavailableFeature):
             terminal_output, message = self.generate_unavailable_feature_messages(context, error)
         elif isinstance(error, self.ignored):
             terminal_output, message = self.generate_ignore_error_messages(error)

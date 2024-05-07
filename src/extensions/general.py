@@ -17,6 +17,9 @@ class General(commands.Cog):
 
     @commands.command(aliases=["prefixes"])
     async def prefix(self, context: "Context"):
+        """
+        Pretty self explanatory
+        """
         embed = discord.Embed(
             title="You can ping/mention me or use the prefixes from the following examples:",
             description="\n".join(f"`{prefix}help`" for prefix in PREFIXES),

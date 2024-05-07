@@ -1,3 +1,2 @@
-# pyright: reportUnusedImport=false
-from . import tables
-from .core import *
+from .database import *
+from .tables import *

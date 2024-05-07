@@ -5,32 +5,31 @@ import typing
 
 import sqlalchemy
 
-from src.errors import CannotConnect
+from src import errors
 
 if typing.TYPE_CHECKING:
-    from .core import Database
+    from src import Database
 
 __all__ = (
     "METADATA",
-    "PINBOARD",
+    "PINBOARDS",
     "LINKED_CHANNEL_IDS",
     "maybe_create",
 )
 METADATA = sqlalchemy.MetaData()
-PINBOARD = sqlalchemy.Table(
-    "pinboard",
+# TODO: Add support for guilds
+PINBOARDS = sqlalchemy.Table(
+    "pinboards",
     METADATA,
     sqlalchemy.Column("id", sqlalchemy.Integer(), primary_key=True),
-    sqlalchemy.Column("channel_id", sqlalchemy.BigInteger(), nullable=False),
+    sqlalchemy.Column("channel_id", sqlalchemy.BigInteger(), nullable=False, unique=True),
 )
 LINKED_CHANNEL_IDS = sqlalchemy.Table(
     "linked_channel_ids",
     METADATA,
     sqlalchemy.Column("id", sqlalchemy.Integer(), primary_key=True),
     sqlalchemy.Column("channel_id", sqlalchemy.BigInteger(), nullable=False),
-    sqlalchemy.Column(
-        "pinboard_channel_id", sqlalchemy.BigInteger(), sqlalchemy.ForeignKey(PINBOARD.columns.id), nullable=False
-    ),
+    sqlalchemy.Column("pinboard_channel_id", sqlalchemy.BigInteger(), nullable=False),
 )
 
 
@@ -42,6 +41,11 @@ async def maybe_create(database: "Database"):
     # being established regardless, leading to an attempt at connecting to
     # nothing (lol)
     except socket.gaierror:
-        raise CannotConnect from None
+        raise errors.CannotConnect from None
     except Exception as error:
-        raise CannotConnect from error
+        raise errors.CannotConnect from error
+
+
+async def drop_all(database: "Database"):
+    async with database.driver.begin() as connection:
+        await connection.run_sync(METADATA.drop_all)
