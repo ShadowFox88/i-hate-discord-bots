@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import sys
 import textwrap
@@ -33,10 +34,7 @@ class ErrorHandler(commands.Cog):
         self.bot = bot
 
         self._original_on_error = _original_on_error
-        self.ignored = (
-            errors.CheckError,
-            commands.CommandNotFound,
-        )
+        self.ignored = (errors.CheckError, commands.CommandNotFound, asyncio.TimeoutError)
 
     def teardown(self):
         self.bot.on_error = self._original_on_error

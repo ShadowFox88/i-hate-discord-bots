@@ -21,21 +21,30 @@ class Pinboards(commands.Cog):
     def __init__(self, bot: "Bot"):
         self.bot = bot
 
+    # FIXME: Track older messages using raw event listener
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message):
+        # TODO: Use built-in logging instead
         if getattr(before.guild, "id", -1) != HOME_GUILD_ID:
             print("Ignoring message edit in non-home guild...")
 
             return
 
         if not (_message_was_pinned := not before.pinned and after.pinned):
+            print("Ignoring message edit as message was not pinned...")
+
             return
 
-        channel_ids = await self.bot.database.get_pinboard_channel_ids(before.channel.id)
+        channel_ids_found = await self.bot.database.get_pinboard_channel_ids(before.channel.id)
 
-        await before.unpin()
+        if not channel_ids_found:
+            print("Ignoring message edit due to no linked channels...")
 
-        for id_ in channel_ids:
+            return
+
+        error_raised = False
+
+        for id_ in channel_ids_found:
             pinboard_channel_found = self.bot.get_channel(id_)
 
             if not (pinboard_channel_found and isinstance(pinboard_channel_found, discord.TextChannel)):
@@ -46,7 +55,15 @@ class Pinboards(commands.Cog):
             try:
                 await pinboard_channel_found.send(before.content)
             except Exception as error:
+                if not error_raised:
+                    error_raised = True
+
                 traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+
+        if error_raised:
+            return
+
+        await before.unpin()
 
     @checks.depends_on("database")
     @commands.group()

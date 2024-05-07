@@ -19,10 +19,12 @@ __all__ = ("Database",)
 
 
 # TODO: Either this needs to be a module or the design needs to be re-thought
+# TODO: Refactor
 class Database:
     async def _connect_to_driver(self) -> "Driver | None":
         for retry_count in range(1, 6):
             try:
+                # TODO: Refactor
                 return async_sqlalchemy.create_async_engine(
                     CONFIGURATION.POSTGRES_DSN
                     or f"postgresql+asyncpg://{CONFIGURATION.POSTGRES_USER}:{CONFIGURATION.POSTGRES_PASSWORD}@"
