@@ -9,7 +9,7 @@ class Pinboards(discord.ui.View):
 
         self.author = author
 
-    @discord.ui.button(label="\N{WASTEBASKET}", style=discord.ButtonStyle.red)
+    @discord.ui.button(emoji="\N{WASTEBASKET}", style=discord.ButtonStyle.red)
     async def delete(self, interaction: discord.Interaction, _button: discord.ui.Button[typing.Self]):
         if interaction.message:
             await interaction.message.delete()
