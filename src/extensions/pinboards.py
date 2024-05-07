@@ -44,6 +44,11 @@ class Pinboards(commands.Cog):
 
             return
 
+        if not isinstance(before.channel, discord.TextChannel):
+            print("Ignoring message edit in non-text channel...")
+
+            return
+
         if not (_message_was_pinned := not before.pinned and after.pinned):
             print("Ignoring message edit as message was not pinned...")
 
