@@ -135,6 +135,7 @@ class Pins(commands.Cog):
 
         for message in reversed(pinned_messages):
             await selected_channel.send(message.content)
+            await message.unpin()
 
 
 async def setup(bot: "Bot"):
