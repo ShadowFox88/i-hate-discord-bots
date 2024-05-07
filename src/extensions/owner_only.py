@@ -4,6 +4,8 @@ import typing
 
 from discord.ext import commands
 
+from src.database import tables
+
 if typing.TYPE_CHECKING:
     from src import Bot, Context
 
@@ -17,7 +19,11 @@ class OwnerOnly(commands.Cog, command_attrs=ALL_COMMAND_ATTRIBUTES):
 
     @commands.command()
     async def prune(self, context: "Context"):
+        """
+        Drop then re-create all tables
+        """
         await self.bot.database.prune()
+        await tables.maybe_create(self.bot.database)
         await context.send("Pruned all databases, schemas remain intact")
 
 
