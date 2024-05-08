@@ -34,7 +34,7 @@ class ErrorHandler(commands.Cog):
         self.bot = bot
 
         self._original_on_error = _original_on_error
-        self.ignored = (errors.CheckError, commands.CommandNotFound, asyncio.TimeoutError)
+        self.ignored = (errors.CheckError, commands.CommandNotFound, asyncio.TimeoutError, errors.NoConfigurationFound)
 
     def teardown(self):
         self.bot.on_error = self._original_on_error

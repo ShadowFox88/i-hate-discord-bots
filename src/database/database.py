@@ -15,7 +15,14 @@ if typing.TYPE_CHECKING:
     from src.typings import Driver, SessionManager
 
 
-__all__ = ("Database",)
+__all__ = (
+    "Configuration",
+    "Database",
+)
+
+
+class Configuration(typing.TypedDict):
+    automatic_migration_mode: enums.AutomaticMigrationMode
 
 
 # TODO: Either this needs to be a module or the design needs to be re-thought
@@ -55,6 +62,9 @@ class Database:
 
         self._driver_connected.set()
 
+    # TODO: Create a way to make all functions that depend on the database being
+    # ready to automatically run this command, create a session and pass it as
+    # the first parameter in the exact same style as countlessly shown
     async def wait_until_ready(self):
         await self._driver_connected.wait()
 
@@ -90,7 +100,7 @@ class Database:
                 tables.LINKED_CHANNEL_IDS.insert().values(channel_id=channel_id, pinboard_channel_id=pinboard_channel_id)
             )
 
-    async def get_automatic_migration_mode(self) -> enums.AutomaticMigrationMode:
+    async def get_configuration(self):
         await self.wait_until_ready()
 
         async with self.session_manager.begin() as session:
@@ -99,6 +109,13 @@ class Database:
             )
 
             if row_found := result.fetchone():
-                return row_found.automatic_migration_mode
+                return Configuration(automatic_migration_mode=row_found.automatic_migration_mode)
 
             raise errors.NoConfigurationFound
+
+    # TODO: Replace Any types if possible
+    async def set_configuration_setting(self, setting: typing.Any, value: typing.Any):
+        await self.wait_until_ready()
+
+        async with self.session_manager.begin() as session:
+            await session.execute(tables.GLOBAL_CONFIGURATION.update().values({setting: value}))

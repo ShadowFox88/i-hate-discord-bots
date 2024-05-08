@@ -166,7 +166,8 @@ class Pinboards(commands.Cog):
         if len(pinned_messages) != self.MAXIMUM_PINNED_MESSAGES_LIMIT:
             return
 
-        mode = await self.bot.database.get_automatic_migration_mode()
+        configuration = await self.bot.database.get_configuration()
+        mode = configuration["automatic_migration_mode"]
 
         if mode is enums.AutomaticMigrationMode.MANUAL:
             return
