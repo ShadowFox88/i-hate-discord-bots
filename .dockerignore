@@ -3,5 +3,5 @@
 .gitignore
 .sourcery.yaml
 LICENSE
-pyproject.toml
 README.md
+pyproject.toml
