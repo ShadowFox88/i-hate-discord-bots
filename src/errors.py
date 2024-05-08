@@ -1,6 +1,6 @@
 from discord.ext import commands
 
-__all__ = ("BaseError", "CheckError", "UnavailableFeature", "DatabaseError", "CannotConnect")
+__all__ = ("BaseError", "CheckError", "UnavailableFeature", "DatabaseError", "CannotConnect", "NoConfigurationFound")
 
 
 class BaseError(Exception):
@@ -23,4 +23,8 @@ class DatabaseError(BaseError):
 
 
 class CannotConnect(DatabaseError):
+    pass
+
+
+class NoConfigurationFound(DatabaseError):
     pass

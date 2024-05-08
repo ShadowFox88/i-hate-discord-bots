@@ -7,7 +7,7 @@ import typing
 import sqlalchemy
 import sqlalchemy.ext.asyncio as async_sqlalchemy
 
-from src import CONFIGURATION
+from src import CONFIGURATION, enums, errors
 
 from . import tables
 
@@ -89,3 +89,16 @@ class Database:
             await session.execute(
                 tables.LINKED_CHANNEL_IDS.insert().values(channel_id=channel_id, pinboard_channel_id=pinboard_channel_id)
             )
+
+    async def get_automatic_migration_mode(self) -> enums.AutomaticMigrationMode:
+        await self.wait_until_ready()
+
+        async with self.session_manager.begin() as session:
+            result: sqlalchemy.Result[tuple[enums.AutomaticMigrationMode]] = await session.execute(
+                sqlalchemy.select(tables.GLOBAL_CONFIGURATION)
+            )
+
+            if row_found := result.fetchone():
+                return row_found.automatic_migration_mode
+
+            raise errors.NoConfigurationFound
