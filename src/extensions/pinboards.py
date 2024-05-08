@@ -18,6 +18,7 @@ if typing.TYPE_CHECKING:
     from src import Bot, Context
 
 
+# TODO: Lock all commands behind the manage messages permission
 class Pinboards(commands.Cog):
     EMOJI_DIGITS = (
         "\N{DIGIT ONE}\N{VARIATION SELECTOR-16}\N{COMBINING ENCLOSING KEYCAP}",
