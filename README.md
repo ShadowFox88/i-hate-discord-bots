@@ -1,4 +1,6 @@
-# Pinbot ![Pinbot](https://github.com/cyrus01337/i-hate-discord-bots/blob/main/avatar.png)
+![Pinbot](https://github.com/cyrus01337/i-hate-discord-bots/blob/main/avatar.png)
+
+# Pinbot
 Pinbot is an attempt at combining the starboard feature and extending it with
 Discord pinned messages - instead of reacting with a star emoji, you pin a
 message to broadcast the message to the pinboard. You can have as many pinboards
