@@ -7,6 +7,7 @@ import dotenv
 __all__ = ("CONFIGURATION",)
 
 
+# TODO: Make mandatory
 @dataclasses.dataclass
 class Configuration:
     POSTGRES_DATABASE: str
