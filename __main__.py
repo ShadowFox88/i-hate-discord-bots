@@ -12,9 +12,9 @@ async def initialise_database():
         await database.initialise()
     except DatabaseError as error:
         # TODO: Create custom logger with fancy terminal colours
-        error_stack = traceback.format_exception(type(error), error, error.__traceback__)
+        stack = traceback.format_exception(type(error), error, error.__traceback__)
 
-        print("An error occurred when initialising database:\n\n", *error_stack, file=sys.stderr, sep="")
+        print("An error occurred when initialising database:\n\n", *stack, file=sys.stderr, sep="")
         flags.set("NO_DATABASE")
 
 

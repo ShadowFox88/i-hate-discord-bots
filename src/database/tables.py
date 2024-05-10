@@ -3,16 +3,29 @@ from tortoise import fields
 
 from src import enums
 
-__all__ = ("Pinboards", "LinkedChannelIDs", "GlobalConfiguration", "ALL")
-__models__ = ("Pinboards", "LinkedChannelIDs", "GlobalConfiguration")
+__all__ = (
+    "Pinboard",
+    "LinkedChannel",
+    "GlobalConfiguration",
+    "Message",
+    "DataProtectedUser",
+    "ALL",
+)
+__models__ = (
+    "Pinboard",
+    "LinkedChannel",
+    "GlobalConfiguration",
+    "Message",
+    "DataProtectedUser",
+)
 
 
-class Pinboards(tortoise.Model):
+class Pinboard(tortoise.Model):
     id = fields.IntField(pk=True)
     channel_id = fields.BigIntField(unique=True)
 
 
-class LinkedChannelIDs(tortoise.Model):
+class LinkedChannel(tortoise.Model):
     id = fields.IntField(pk=True)
     channel_id = fields.BigIntField()
     pinboard_channel_id = fields.BigIntField()
@@ -24,4 +37,17 @@ class GlobalConfiguration(tortoise.Model):
     )
 
 
-ALL = (Pinboards, LinkedChannelIDs, GlobalConfiguration)
+class Message(tortoise.Model):
+    id = fields.IntField(unique=True)
+    author_id = fields.IntField()
+    channel_id = fields.BigIntField()
+    created_at = fields.DatetimeField()
+    content = fields.CharField(2000)
+    pinned = fields.BooleanField()
+
+
+class DataProtectedUser(tortoise.Model):
+    id = fields.IntField(unique=True)
+
+
+ALL = (Pinboard, LinkedChannel, GlobalConfiguration, Message, DataProtectedUser)

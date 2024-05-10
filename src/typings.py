@@ -1,12 +1,10 @@
 import typing
 
-import sqlalchemy.ext.asyncio as async_sqlalchemy
+import discord
 
 __all__ = (
-    "Driver",
-    "SessionManager",
     "Feature",
+    "PinSupportedChannel",
 )
-type Driver = async_sqlalchemy.AsyncEngine
-type SessionManager = async_sqlalchemy.async_sessionmaker[async_sqlalchemy.AsyncSession]
 type Feature = typing.Literal["database"]
+type PinSupportedChannel = discord.TextChannel | discord.Thread

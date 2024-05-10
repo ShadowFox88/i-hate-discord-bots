@@ -14,8 +14,10 @@ from src.database import tables
 
 if typing.TYPE_CHECKING:
     from src import Bot, Context
+    from src.typings import PinSupportedChannel
 
 
+# TODO: Rethink design with a clear mind
 # TODO: Lock all commands behind the manage messages permission
 class Pinboards(commands.Cog):
     EMOJI_DIGITS = (
@@ -35,11 +37,15 @@ class Pinboards(commands.Cog):
     EMOJI_CROSS = "\N{CROSS MARK}"
     # TODO: Make this configurable just in case Discord decideds to change it
     MAXIMUM_PINNED_MESSAGES_LIMIT = 50
+    PIN_SUPPORTED_CHANNEL_TYPES = (
+        discord.TextChannel,
+        discord.Thread,
+    )
 
     def __init__(self, bot: "Bot"):
         self.bot = bot
 
-    async def _request_confirmation(self, *, channel: discord.TextChannel, embed: discord.Embed):
+    async def _request_confirmation(self, *, channel: PinSupportedChannel, embed: discord.Embed):
         response = await channel.send(embed=embed)
 
         await response.add_reaction(self.EMOJI_CHECKMARK)
@@ -69,7 +75,7 @@ class Pinboards(commands.Cog):
 
         return True
 
-    def _create_pinboard_channel_paginator(self, channels: list[discord.TextChannel]):
+    def _create_pinboard_channel_paginator(self, channels: list[PinSupportedChannel]):
         TOTAL_CHOICES = 9
         # Might need to expose private attributes like the current page
         paginator = commands.Paginator(prefix="", suffix="")
@@ -92,9 +98,9 @@ class Pinboards(commands.Cog):
     async def _prompt_pin_migration_channel(
         self,
         *,
-        channel: discord.TextChannel,
+        channel: PinSupportedChannel,
         pages: list[str],
-        pinboard_channels: list[discord.TextChannel],
+        pinboard_channels: list[PinSupportedChannel],
         author: discord.Member | None = None,
     ):
         TOTAL_PAGES = len(pages)
@@ -103,7 +109,7 @@ class Pinboards(commands.Cog):
         current_page = pages[current_page_number]
         embed = discord.Embed(title="Select a \N{PUSHPIN}pinboard to migrate to", description=current_page)
         response = await channel.send(embed=embed)
-        selected: discord.TextChannel | None = None
+        selected: PinSupportedChannel | None = None
 
         await response.add_reaction(self.EMOJI_LEFT_ARROW)
 
@@ -157,7 +163,7 @@ class Pinboards(commands.Cog):
     # increments/decrements of newly un/pinned messages within a linked channel
 
     # You may need to use Redis for a more persistent cache
-    async def _maybe_process_automated_migration(self, *, channel: discord.TextChannel):
+    async def _maybe_process_automated_migration(self, *, channel: PinSupportedChannel):
         pinned_messages = await channel.pins()
 
         if len(pinned_messages) != self.MAXIMUM_PINNED_MESSAGES_LIMIT:
@@ -180,31 +186,55 @@ class Pinboards(commands.Cog):
                 return
 
         pinboard_channel_ids = await database.get_pinboard_channel_ids(linked_channel_id=channel.id)
-        pinboard_channels = [typing.cast(discord.TextChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
+        pinboard_channels = [typing.cast(PinSupportedChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
         pages = self._create_pinboard_channel_paginator(pinboard_channels)
 
         await self._prompt_pin_migration_channel(channel=channel, pages=pages, pinboard_channels=pinboard_channels)
 
-    # FIXME: Track older messages using raw event listener
+    async def _maybe_fetch_channel(self, id_: int):
+        if channel_found := self.bot.get_channel(id_):
+            return channel_found
+
+        return await self.bot.fetch_channel(id_)
+
+    async def _maybe_fetch_text_channel(self, id_: int):
+        channel = await self._maybe_fetch_channel(id_)
+
+        assert isinstance(channel, self.PIN_SUPPORTED_CHANNEL_TYPES)
+
+        return channel
+
     @commands.Cog.listener()
-    async def on_message_edit(self, before: discord.Message, after: discord.Message):
-        # TODO: Use built-in logging instead
-        if getattr(before.guild, "id", -1) != HOME_GUILD_ID:
-            print("Ignoring message edit in non-home guild...")
-
+    async def on_message(self, message: discord.Message):
+        if _users_datas_protected := await database.is_users_data_protected(user_id=message.author.id):
             return
 
-        if not isinstance(before.channel, discord.TextChannel):
-            print("Ignoring message edit in non-text channel...")
+        await database.store_message(message)
 
-            return
+    async def _maybe_fetch_message(self, id_: int, *, cached_message: discord.Message | None, channel: PinSupportedChannel):
+        try:
+            return cached_message or await channel.fetch_message(id_)
+        except discord.HTTPException as error:
+            stack = traceback.format_exception(type(error), error, error.__traceback__)
 
-        if not (_message_was_pinned := not before.pinned and after.pinned):
-            print("Ignoring message edit as message was not pinned...")
+            print("An error occurred when fetching message:\n\n", *stack, file=sys.stderr, sep="")
 
-            return
+            return None
 
-        channel_ids_found = await database.get_pinboard_channel_ids(linked_channel_id=before.channel.id)
+    async def _maybe_fetch_stored_message(
+        self, id_: int, *, cached_message: discord.Message | None, channel: PinSupportedChannel
+    ):
+        if cached_message:
+            return cached_message
+        elif stored_message_found := await database.get_message(id_):
+            return stored_message_found
+
+        return await self._maybe_fetch_message(id_, cached_message=cached_message, channel=channel)
+
+    async def _process_pinned_message(
+        self, *, channel: PinSupportedChannel, linked_channel_id: int, previous_message: discord.Message | tables.Message
+    ):
+        channel_ids_found = await database.get_pinboard_channel_ids(linked_channel_id=linked_channel_id)
 
         if not channel_ids_found:
             print("Ignoring message edit due to no linked channels...")
@@ -216,13 +246,13 @@ class Pinboards(commands.Cog):
         for id_ in channel_ids_found:
             pinboard_channel_found = self.bot.get_channel(id_)
 
-            if not (pinboard_channel_found and isinstance(pinboard_channel_found, discord.TextChannel)):
+            if not (pinboard_channel_found and isinstance(pinboard_channel_found, self.PIN_SUPPORTED_CHANNEL_TYPES)):
                 print(f"Ignoring channel with ID {id_}")
 
                 continue
 
             try:
-                await pinboard_channel_found.send(before.content)
+                await pinboard_channel_found.send(previous_message.content)
             except Exception as error:
                 if not error_raised:
                     error_raised = True
@@ -232,14 +262,75 @@ class Pinboards(commands.Cog):
         if error_raised:
             return
 
+        if isinstance(previous_message, tables.Message):
+            await previous_message.delete()
+
+            previous_message = await channel.fetch_message(previous_message.id)
+
         # TODO: Check permissions for the channel to avoid raising an error
         try:
-            await before.unpin()
+            await previous_message.unpin()
         except discord.Forbidden:
             print("Ignoring unpinning message due to lack of permissions...")
 
             # TODO: Test this
-            await self._maybe_process_automated_migration(channel=before.channel)
+            await self._maybe_process_automated_migration(channel=channel)
+
+    @commands.Cog.listener()
+    async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
+        # TODO: Use built-in logging instead
+        if payload.guild_id != HOME_GUILD_ID:
+            print("Ignoring message edit in non-home guild...")
+
+            return
+
+        channel = await self._maybe_fetch_channel(payload.channel_id)
+
+        if not isinstance(channel, self.PIN_SUPPORTED_CHANNEL_TYPES):
+            print("Ignoring message edit in non-text channel...")
+
+            return
+
+        if not (
+            previous_message_found := await self._maybe_fetch_stored_message(
+                payload.message_id, cached_message=payload.cached_message, channel=channel
+            )
+        ):
+            print("Ignoring message edit as unable to compare pin status of non-existant, prior message state...")
+
+            return
+
+        new_message = await channel.fetch_message(payload.message_id)
+
+        if _message_was_pinned := not previous_message_found.pinned and new_message.pinned:
+            await self._process_pinned_message(
+                channel=channel, linked_channel_id=payload.channel_id, previous_message=previous_message_found
+            )
+        elif _message_wa_edited := previous_message_found.content != new_message.content:
+            if isinstance(previous_message_found, tables.Message):
+                await previous_message_found.select_for_update().update(content=new_message.content)
+
+    @commands.Cog.listener()
+    async def on_raw_message_delete(self, payload: discord.RawMessageDeleteEvent):
+        if not await database.message_exists_with_id(payload.message_id):
+            return
+
+        if not (message_found := payload.cached_message):
+            # Given the context of this event, both the channel and message are
+            # guaranteed to exist so the typecast is safe
+            channel = await self._maybe_fetch_text_channel(payload.channel_id)
+            message_found = typing.cast(
+                discord.Message,
+                await self._maybe_fetch_message(payload.message_id, cached_message=payload.cached_message, channel=channel),
+            )
+
+        try:
+            await message_found.delete()
+            await database.delete_message(payload.message_id)
+        except discord.HTTPException as error:
+            stack = traceback.format_exception(type(error), error, error.__traceback__)
+
+            print("An error occurred when invalidating message from database", *stack, file=sys.stderr, sep="")
 
     @checks.depends_on("database")
     @commands.group()
@@ -251,7 +342,7 @@ class Pinboards(commands.Cog):
             return
 
         view = views.Delete(author=context.author)
-        rows = await tables.Pinboards.all().order_by("channel_id").limit(6)
+        rows = await tables.Pinboard.all().order_by("channel_id").limit(6)
         # sourcery skip: use-or-for-fallback
         description = "\n".join(f"<#{row.channel_id}>" for row in rows)
 
@@ -271,7 +362,7 @@ class Pinboards(commands.Cog):
 
     @checks.depends_on("database")
     @pinboards.command(name="add")
-    async def pinboard_add(self, context: Context, channel: discord.TextChannel):
+    async def pinboard_add(self, context: Context, channel: PinSupportedChannel):
         """
         Add a channel to register as a pinboard
         """
@@ -281,7 +372,7 @@ class Pinboards(commands.Cog):
     @checks.depends_on("database")
     @pinboards.command(name="link")
     async def pinboard_link(
-        self, context: Context, channel_to_link: discord.TextChannel, pinboard_channel: discord.TextChannel
+        self, context: Context, channel_to_link: PinSupportedChannel, pinboard_channel: PinSupportedChannel
     ):
         """
         Assign a channel to an existing pinboard
@@ -296,8 +387,11 @@ class Pinboards(commands.Cog):
         Migrates all pinned messages in the current channel to a selected pinboard
         """
         pinboard_channel_ids = await database.get_pinboard_channel_ids(linked_channel_id=context.channel.id)
-        pinboard_channels = [typing.cast(discord.TextChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
-        selected_channel: discord.TextChannel | None = None
+        pinboard_channels = [typing.cast(PinSupportedChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
+
+        assert isinstance(context.channel, self.PIN_SUPPORTED_CHANNEL_TYPES)
+
+        selected_channel: PinSupportedChannel | None = None
 
         # There's no point prompting for selection when there is only one
         # pinboard, might as well automatically select it for the user and skip
@@ -308,7 +402,7 @@ class Pinboards(commands.Cog):
             pages = self._create_pinboard_channel_paginator(pinboard_channels)
             selected_channel = await self._prompt_pin_migration_channel(
                 author=context.author,
-                channel=typing.cast(discord.TextChannel, context.channel),
+                channel=context.channel,
                 pages=pages,
                 pinboard_channels=pinboard_channels,
             )
