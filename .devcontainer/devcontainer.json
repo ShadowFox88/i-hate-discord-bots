@@ -6,7 +6,7 @@
     "forwardPorts": [
         5432
     ],
-    "postCreateCommand": "/bin/bash .devcontainer/install-dependencies.sh",
+    "postCreateCommand": ".devcontainer/setup.sh",
     "shutdownAction": "stopCompose",
     "customizations": {
         "vscode": {
