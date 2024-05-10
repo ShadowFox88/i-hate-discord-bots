@@ -107,8 +107,7 @@ class Pinboards(commands.Cog):
 
         await response.add_reaction(self.EMOJI_LEFT_ARROW)
 
-        # FIXME: There has to be a better way
-        for index in range(current_page.find("\n") + 1):
+        for index in range(current_page.count("\n")):
             emoji = self.EMOJI_DIGITS[index]
 
             await response.add_reaction(emoji)
