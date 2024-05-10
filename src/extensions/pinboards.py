@@ -6,11 +6,9 @@ import traceback
 import typing
 
 import discord
-import sqlalchemy
-import sqlalchemy.ext.asyncio as async_sqlalchemy
 from discord.ext import commands
 
-from src import checks, enums, views
+from src import checks, database, enums, views
 from src.constants import HOME_GUILD_ID
 from src.database import tables
 
@@ -166,8 +164,8 @@ class Pinboards(commands.Cog):
         if len(pinned_messages) != self.MAXIMUM_PINNED_MESSAGES_LIMIT:
             return
 
-        configuration = await self.bot.database.get_configuration()
-        mode = configuration["automatic_migration_mode"]
+        configuration = await database.get_configuration()
+        mode = configuration.automatic_migration_mode
 
         if mode is enums.AutomaticMigrationMode.MANUAL:
             return
@@ -182,7 +180,7 @@ class Pinboards(commands.Cog):
             if not confirmed:
                 return
 
-        pinboard_channel_ids = await self.bot.database.get_pinboard_channel_ids(linked_channel_id=channel.id)
+        pinboard_channel_ids = await database.get_pinboard_channel_ids(linked_channel_id=channel.id)
         pinboard_channels = [typing.cast(discord.TextChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
         pages = self._create_pinboard_channel_paginator(pinboard_channels)
 
@@ -207,7 +205,7 @@ class Pinboards(commands.Cog):
 
             return
 
-        channel_ids_found = await self.bot.database.get_pinboard_channel_ids(before.channel.id)
+        channel_ids_found = await database.get_pinboard_channel_ids(linked_channel_id=before.channel.id)
 
         if not channel_ids_found:
             print("Ignoring message edit due to no linked channels...")
@@ -254,31 +252,21 @@ class Pinboards(commands.Cog):
             return
 
         view = views.Delete(author=context.author)
-        generated_descriptions = ""
+        rows = await tables.Pinboards.all().order_by("channel_id").limit(6)
+        # sourcery skip: use-or-for-fallback
+        description = "\n".join(f"<#{row.channel_id}>" for row in rows)
 
-        # TODO: Replace with session manager tied to bot which does this for you
-        # internally by default
-        async with async_sqlalchemy.AsyncSession(self.bot.database.driver) as session:
-            result: sqlalchemy.Result[tuple[int]] = await session.execute(
-                sqlalchemy.select(tables.PINBOARDS.columns.channel_id)
-                .order_by(tables.PINBOARDS.columns.channel_id.asc())
-                .limit(6)
-            )
-
-            for row in result.fetchall():
-                generated_descriptions += f"<#{row.channel_id}>\n"
-
-        if not generated_descriptions:
+        if not description:
             # TODO: Create or use a third-party module that allows me to
             # reference these emojis by name and provides auto-complete instead
             # of relying on strings that could potentially be misspelled/misremembered
-            generated_descriptions = (
+            description = (
                 "\N{CROSS MARK} You do not have any pinboards registered in this server!\n"
                 "\n"
                 "\N{LEFT SPEECH BUBBLE}\N{VARIATION SELECTOR-16} \N{ROBOT FACE} To create one, use `pinboard add #channel`, where `#channel` is the text channel to transform into a pinboard."
             )
 
-        embed = discord.Embed(title="\N{PUSHPIN} Pinboards", description=generated_descriptions)
+        embed = discord.Embed(title="\N{PUSHPIN} Pinboards", description=description)
 
         await context.send(embed=embed, view=view)
 
@@ -288,7 +276,7 @@ class Pinboards(commands.Cog):
         """
         Add a channel to register as a pinboard
         """
-        await self.bot.database.create_pinboard(channel.id)
+        await database.create_pinboard(channel_id=channel.id)
         await context.send(f"Registered {channel.mention} as a pinboard!")
 
     @checks.depends_on("database")
@@ -299,7 +287,7 @@ class Pinboards(commands.Cog):
         """
         Assign a channel to an existing pinboard
         """
-        await self.bot.database.link_channel_to_pinboard(channel_to_link.id, pinboard_channel.id)
+        await database.link_channel_to_pinboard(channel_id=channel_to_link.id, pinboard_channel_id=pinboard_channel.id)
         await context.send(f"Successfully linked {channel_to_link.mention} to the \N{PUSHPIN}{pinboard_channel.mention}")
 
     @checks.depends_on("database")
@@ -308,7 +296,7 @@ class Pinboards(commands.Cog):
         """
         Migrates all pinned messages in the current channel to a selected pinboard
         """
-        pinboard_channel_ids = await self.bot.database.get_pinboard_channel_ids(linked_channel_id=context.channel.id)
+        pinboard_channel_ids = await database.get_pinboard_channel_ids(linked_channel_id=context.channel.id)
         pinboard_channels = [typing.cast(discord.TextChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
         selected_channel: discord.TextChannel | None = None
 

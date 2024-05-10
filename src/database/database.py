@@ -1,121 +1,62 @@
-from __future__ import annotations
-
-import asyncio
-import sys
 import typing
 
-import sqlalchemy
-import sqlalchemy.ext.asyncio as async_sqlalchemy
+import tortoise
 
-from src import CONFIGURATION, enums, errors
+from src import CONFIGURATION, flags
+from src.errors import CannotConnect
 
 from . import tables
 
-if typing.TYPE_CHECKING:
-    from src.typings import Driver, SessionManager
+
+async def initialise():
+    url = CONFIGURATION.POSTGRES_DSN or (
+        f"postgres://{CONFIGURATION.POSTGRES_USER}:{CONFIGURATION.POSTGRES_PASSWORD}@"
+        f"{CONFIGURATION.POSTGRES_HOST}/{CONFIGURATION.POSTGRES_DATABASE}"
+    )
+
+    try:
+        # I don't think the unknown types from the configuration are something
+        # that an end user is meant to resolve
+        await tortoise.Tortoise.init(  # type: ignore
+            db_url=url,
+            modules={"models": ["src.new_database"]},
+        )
+        await tortoise.Tortoise.generate_schemas()
+        await tables.GlobalConfiguration.create()
+    except Exception as error:
+        flags.set("NO_DATABASE")
+
+        raise CannotConnect from error
 
 
-__all__ = (
-    "Configuration",
-    "Database",
-)
+async def create_pinboard(*, channel_id: int):
+    await tables.Pinboards.create(channel_id=channel_id)
 
 
-class Configuration(typing.TypedDict):
-    automatic_migration_mode: enums.AutomaticMigrationMode
+async def get_pinboard_channel_ids(*, linked_channel_id: int):
+    rows = await tables.LinkedChannelIDs.all().filter(channel_id=linked_channel_id)
+
+    return [row.pinboard_channel_id for row in rows]
 
 
-# TODO: Either this needs to be a module or the design needs to be re-thought
-# TODO: Refactor
-class Database:
-    async def _connect_to_driver(self) -> "Driver | None":
-        for retry_count in range(1, 6):
-            try:
-                # TODO: Refactor
-                return async_sqlalchemy.create_async_engine(
-                    CONFIGURATION.POSTGRES_DSN
-                    or f"postgresql+asyncpg://{CONFIGURATION.POSTGRES_USER}:{CONFIGURATION.POSTGRES_PASSWORD}@"
-                    f"{CONFIGURATION.POSTGRES_HOST}/{CONFIGURATION.POSTGRES_DATABASE}"
-                )
-            except Exception as error:
-                if retry_count < 5:
-                    await asyncio.sleep(10)
+async def link_channel_to_pinboard(*, channel_id: int, pinboard_channel_id: int):
+    await tables.LinkedChannelIDs.create(channel_id=channel_id, pinboard_channel_id=pinboard_channel_id)
 
-                    continue
 
-                raise error
+async def get_configuration():
+    return await tables.GlobalConfiguration.get()
 
-    def __init__(self):
-        self.driver: Driver
-        self.session_manager: SessionManager
 
-        self._driver_connected = asyncio.Event()
+async def set_configuration_settings(**properties: typing.Any):
+    configuration = await get_configuration()
 
-        asyncio.create_task(self.__ainit__())
+    await configuration.select_for_update().update(**properties)
 
-    async def __ainit__(self):
-        if driver_connected := await self._connect_to_driver():
-            self.driver = driver_connected
-            self.session_manager = async_sqlalchemy.async_sessionmaker(driver_connected)
-        else:
-            print("Failed to initialise database", file=sys.stderr)
 
-        self._driver_connected.set()
+async def prune():
+    for table in tables.ALL:
+        await table.all().delete()
 
-    # TODO: Create a way to make all functions that depend on the database being
-    # ready to automatically run this command, create a session and pass it as
-    # the first parameter in the exact same style as countlessly shown
-    async def wait_until_ready(self):
-        await self._driver_connected.wait()
 
-    async def create_pinboard(self, channel_id: int):
-        await self.wait_until_ready()
-
-        async with self.session_manager.begin() as session:
-            await session.execute(tables.PINBOARDS.insert().values(channel_id=channel_id))
-
-    async def prune(self):
-        await self.wait_until_ready()
-
-        async with self.driver.begin() as connection:
-            await connection.run_sync(tables.METADATA.drop_all)
-
-    async def get_pinboard_channel_ids(self, linked_channel_id: int) -> list[int]:
-        await self.wait_until_ready()
-
-        async with self.session_manager.begin() as session:
-            result: sqlalchemy.Result[tuple[int]] = await session.execute(
-                sqlalchemy.select(tables.LINKED_CHANNEL_IDS.columns.pinboard_channel_id).where(
-                    tables.LINKED_CHANNEL_IDS.columns.channel_id == linked_channel_id
-                )
-            )
-
-            return [row.pinboard_channel_id for row in result.fetchall()]
-
-    async def link_channel_to_pinboard(self, channel_id: int, pinboard_channel_id: int):
-        await self.wait_until_ready()
-
-        async with self.session_manager.begin() as session:
-            await session.execute(
-                tables.LINKED_CHANNEL_IDS.insert().values(channel_id=channel_id, pinboard_channel_id=pinboard_channel_id)
-            )
-
-    async def get_configuration(self):
-        await self.wait_until_ready()
-
-        async with self.session_manager.begin() as session:
-            result: sqlalchemy.Result[tuple[enums.AutomaticMigrationMode]] = await session.execute(
-                sqlalchemy.select(tables.GLOBAL_CONFIGURATION)
-            )
-
-            if row_found := result.fetchone():
-                return Configuration(automatic_migration_mode=row_found.automatic_migration_mode)
-
-            raise errors.NoConfigurationFound
-
-    # TODO: Replace Any types if possible
-    async def set_configuration_setting(self, setting: typing.Any, value: typing.Any):
-        await self.wait_until_ready()
-
-        async with self.session_manager.begin() as session:
-            await session.execute(tables.GLOBAL_CONFIGURATION.update().values({setting: value}))
+async def close():
+    await tortoise.Tortoise.close_connections()

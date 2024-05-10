@@ -5,7 +5,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from src import checks
+from src import checks, database
 
 if typing.TYPE_CHECKING:
     from src import Bot, Context
@@ -24,9 +24,8 @@ class Configuration(commands.Cog):
         if context.invoked_subcommand:
             return
 
-        configuration = await self.bot.database.get_configuration()
-        automatic_migration_mode = configuration["automatic_migration_mode"]
-        description = f"Automatic migration mode: `{automatic_migration_mode.name}`"
+        configuration = await database.get_configuration()
+        description = f"Automatic migration mode: `{configuration.automatic_migration_mode.name}`"
         embed = discord.Embed(title="Configuration", description=description)
 
         await context.send(embed=embed)
@@ -42,8 +41,9 @@ class Configuration(commands.Cog):
         """
         Set a given setting to the given value
         """
-        await self.bot.database.set_configuration_setting(setting, value)
+        updating = {setting: value}
 
+        await database.set_configuration_settings(**updating)
         await context.send(f"Set `{setting}` to `{value}`")
 
 

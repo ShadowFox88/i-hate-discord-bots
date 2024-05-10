@@ -2,15 +2,11 @@ from __future__ import annotations
 
 import pkgutil
 import traceback
-import typing
 
 import discord
 from discord.ext import commands
 
 from src.constants import PREFIXES
-
-if typing.TYPE_CHECKING:
-    from src import Database
 
 __all__ = ("Bot",)
 INTENTS = discord.Intents(
@@ -19,15 +15,11 @@ INTENTS = discord.Intents(
 
 
 class Bot(commands.Bot):
-    def __init__(self, *, database: Database | None = None):
+    def __init__(self):
         super().__init__(
             command_prefix=commands.when_mentioned_or(*PREFIXES),
             intents=INTENTS,
         )
-
-        if database:
-            self.database = database
-            self.sessions = database.session_manager
 
     async def load_extensions(self):
         folder_path = "src/extensions"
