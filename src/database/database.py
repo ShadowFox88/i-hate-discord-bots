@@ -19,7 +19,7 @@ async def initialise():
         # that an end user is meant to resolve
         await tortoise.Tortoise.init(  # type: ignore
             db_url=url,
-            modules={"models": ["src.new_database"]},
+            modules={"models": ["src.database"]},
         )
         await tortoise.Tortoise.generate_schemas()
         await tables.GlobalConfiguration.create()
