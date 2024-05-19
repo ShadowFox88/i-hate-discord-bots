@@ -4,7 +4,8 @@ name: devcontainer
 
 services:
     workspace:
-        image: mcr.microsoft.com/devcontainers/python:1-3.12
+        build:
+            context: .
         restart: always
         volumes:
             - ..:/workspace:cached
