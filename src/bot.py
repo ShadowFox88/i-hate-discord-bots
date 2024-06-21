@@ -21,6 +21,14 @@ class Bot(commands.Bot):
             intents=INTENTS,
         )
 
+    async def load_extension(self, name: str, *, package: str | None = None):
+        try:
+            await super().load_extension(name, package=package)
+        except Exception as error:
+            logs.error(error, message=f"An error occurred when loading {name}")
+        else:
+            logs.info(f"Successfully loaded {name}")
+
     async def load_extensions(self):
         folder_path = "src/extensions"
         folder_path_as_module = folder_path.replace("/", ".")
@@ -30,13 +38,7 @@ class Bot(commands.Bot):
         for module_info in pkgutil.walk_packages([folder_path], prefix=f"{folder_path_as_module}."):
             module_path = module_info.name
 
-            # TODO: Override this and other related methods to log during operations
-            try:
-                await self.load_extension(module_path)
-            except Exception as error:
-                logs.error(error, message=f"An error occurred when loading {module_path}")
-            else:
-                logs.info(f"Successfully loaded {module_path}")
+            await self.load_extension(module_path)
 
         print(*logs, sep="\n", end="\n\n")
 
