@@ -2,6 +2,8 @@ import typing
 
 import discord
 
+from src.constants import EMOJIS
+
 
 class Delete(discord.ui.View):
     def __init__(self, *, author: discord.Member):
@@ -9,7 +11,7 @@ class Delete(discord.ui.View):
 
         self.author = author
 
-    @discord.ui.button(emoji="\N{WASTEBASKET}", style=discord.ButtonStyle.red)
+    @discord.ui.button(emoji=EMOJIS.TRASH, style=discord.ButtonStyle.red)
     async def delete(self, interaction: discord.Interaction, _button: discord.ui.Button[typing.Self]):
         if interaction.message:
             await interaction.message.delete()
