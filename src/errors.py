@@ -1,5 +1,7 @@
 from discord.ext import commands
 
+from src.typings import Feature
+
 __all__ = ("BaseError", "CheckError", "UnavailableFeature", "DatabaseError", "CannotConnect", "NoConfigurationFound")
 
 
@@ -15,7 +17,8 @@ class CheckError(BaseError, commands.CommandError):
 
 
 class UnavailableFeature(CheckError):
-    pass
+    def __init__(self, name: Feature):
+        super().__init__(name)
 
 
 class DatabaseError(BaseError):

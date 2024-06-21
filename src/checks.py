@@ -4,7 +4,7 @@ import typing
 
 from discord.ext import commands
 
-from src import errors, features, flags
+from src import errors, flags
 
 if typing.TYPE_CHECKING:
     from src import Context
@@ -13,8 +13,8 @@ if typing.TYPE_CHECKING:
 
 def depends_on(*features_: "Feature"):
     async def predicate(_: Context):
-        if (database := features.get("database")) in features_ and flags.is_set("NO_DATABASE"):
-            raise errors.UnavailableFeature(database)
+        if "database" in features_ and flags.is_set("NO_DATABASE"):
+            raise errors.UnavailableFeature("database")
 
         return (_CAN_RUN := True)
 
