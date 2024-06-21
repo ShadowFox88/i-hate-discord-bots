@@ -4,18 +4,18 @@ import asyncio
 import contextlib
 import sys
 import textwrap
-import traceback
 import typing
 
 import discord
 from discord.ext import commands
 
-from src import errors
+from src import errors, logs
 
 if typing.TYPE_CHECKING:
     from src import Bot, Context
 
 type Language = typing.Literal["py"]
+
 type TerminalOutput = str | None
 type UserMessage = str | None
 type ErrorMessages = tuple[TerminalOutput, UserMessage]
@@ -23,9 +23,8 @@ type ErrorMessages = tuple[TerminalOutput, UserMessage]
 
 class ErrorHandler(commands.Cog):
     async def on_error(self, error: str, *_args: typing.Any, **_kwargs: typing.Any):
-        stack = traceback.format_exception(*sys.exc_info())
-
-        print("An error occurred:\n\n", *stack, file=sys.stderr, sep="")
+        if real_error_found := sys.exc_info()[1]:
+            logs.error(real_error_found, message="An error occurred")
 
     def __init__(self, bot: "Bot"):
         _original_on_error = bot.on_error
@@ -51,7 +50,7 @@ class ErrorHandler(commands.Cog):
         # fmt: on
 
     def generate_general_error_messages(self, context: "Context", error: commands.CommandError) -> ErrorMessages:
-        stack = "".join(traceback.format_exception(type(error), error, error.__traceback__))
+        stack = logs.format_exception(error)
         header = "An error occurred"
 
         if context.command:
@@ -99,7 +98,7 @@ class ErrorHandler(commands.Cog):
 
     async def try_report_error(self, context: "Context", for_terminal: TerminalOutput, for_user: UserMessage):
         if for_terminal is not None:
-            print(for_terminal)
+            print(for_terminal, file=sys.stderr)
 
         if for_user is None:
             return
@@ -108,9 +107,7 @@ class ErrorHandler(commands.Cog):
             with contextlib.suppress(discord.HTTPException):
                 await context.send(for_user)
         except Exception as error:
-            stack = traceback.format_exception(type(error), error, error.__traceback__)
-
-            print(f"An error occurred when sending error message to user:\n\n", *stack, file=sys.stderr, sep="")
+            logs.error(error, message="An error occurred when sending error message to user")
 
     @commands.Cog.listener()
     async def on_command_error(self, context: "Context", error: commands.CommandError):

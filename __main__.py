@@ -1,9 +1,9 @@
 import asyncio
 import contextlib
-import sys
-import traceback
 
-from src import CONFIGURATION, Bot, database, flags
+import discord
+
+from src import CONFIGURATION, Bot, database, flags, logs
 from src.errors import DatabaseError
 
 
@@ -11,15 +11,14 @@ async def initialise_database():
     try:
         await database.initialise()
     except DatabaseError as error:
-        # TODO: Create custom logger with fancy terminal colours
-        stack = traceback.format_exception(type(error), error, error.__traceback__)
-
-        print("An error occurred when initialising database:\n\n", *stack, file=sys.stderr, sep="")
+        logs.error(error, message="Failed to initialise database")
         flags.set("NO_DATABASE")
 
 
 async def main():
     bot = Bot()
+
+    discord.utils.setup_logging()
 
     try:
         await initialise_database()
@@ -27,7 +26,7 @@ async def main():
         with contextlib.suppress(asyncio.CancelledError, KeyboardInterrupt):
             await bot.start(CONFIGURATION.TOKEN)
     except Exception as error:
-        traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+        logs.error(error)
     finally:
         await bot.close()
 

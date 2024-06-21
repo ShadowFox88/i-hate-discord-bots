@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import asyncio
-import sys
-import traceback
 import typing
 
 import discord
 from discord.ext import commands
 
-from src import checks, database, enums, views
+from src import checks, database, enums, logs, views
 from src.constants import HOME_GUILD_ID
 from src.database import tables
 
@@ -85,7 +83,10 @@ class Pinboards(commands.Cog):
             emoji = self.EMOJI_DIGITS[index]
 
             try:
-                paginator.add_line(f"{emoji}) {channel.mention} (`{channel.id}`)")
+                paginator.add_line(
+                    f"{emoji}) {
+                        channel.mention} (`{channel.id}`)"
+                )
             except RuntimeError:
                 paginator.close_page()
             else:
@@ -215,9 +216,7 @@ class Pinboards(commands.Cog):
         try:
             return cached_message or await channel.fetch_message(id_)
         except discord.HTTPException as error:
-            stack = traceback.format_exception(type(error), error, error.__traceback__)
-
-            print("An error occurred when fetching message:\n\n", *stack, file=sys.stderr, sep="")
+            logs.error(error, message="An error occurred when fetching message")
 
             return None
 
@@ -257,7 +256,7 @@ class Pinboards(commands.Cog):
                 if not error_raised:
                     error_raised = True
 
-                traceback.print_exception(type(error), error, error.__traceback__, file=sys.stderr)
+                logs.error(error)
 
         if error_raised:
             return
@@ -328,9 +327,7 @@ class Pinboards(commands.Cog):
             await message_found.delete()
             await database.delete_message(payload.message_id)
         except discord.HTTPException as error:
-            stack = traceback.format_exception(type(error), error, error.__traceback__)
-
-            print("An error occurred when invalidating message from database", *stack, file=sys.stderr, sep="")
+            logs.error(error, message="An error occurred when invalidating message from database")
 
     @checks.depends_on("database")
     @commands.group()

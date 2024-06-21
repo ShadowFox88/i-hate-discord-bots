@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import pkgutil
-import traceback
 
 import discord
 from discord.ext import commands
 
+from src import logs
 from src.constants import PREFIXES
 
 __all__ = ("Bot",)
@@ -24,7 +24,6 @@ class Bot(commands.Bot):
     async def load_extensions(self):
         folder_path = "src/extensions"
         folder_path_as_module = folder_path.replace("/", ".")
-        logs: list[str] = []
 
         await self.load_extension("jishaku")
 
@@ -35,11 +34,9 @@ class Bot(commands.Bot):
             try:
                 await self.load_extension(module_path)
             except Exception as error:
-                traceback_ = "".join(traceback.format_exception(type(error), error, error.__traceback__))
-
-                logs.append(f"An error occurred when loading {module_path}:\n\n{traceback_}")
+                logs.error(error, message=f"An error occurred when loading {module_path}")
             else:
-                logs.append(f"Successfully loaded {module_path}")
+                logs.info(f"Successfully loaded {module_path}")
 
         print(*logs, sep="\n", end="\n\n")
 
