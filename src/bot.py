@@ -41,8 +41,6 @@ class Bot(commands.Bot):
 
             await self.load_extension(module_path)
 
-        print(*logs, sep="\n", end="\n\n")
-
     async def setup_hook(self):
         await self.load_extensions()
 
