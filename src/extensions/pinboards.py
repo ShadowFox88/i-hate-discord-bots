@@ -266,7 +266,6 @@ class Pinboards(commands.Cog):
 
             previous_message = await channel.fetch_message(previous_message.id)
 
-        # TODO: Check permissions for the channel to avoid raising an error
         try:
             await previous_message.unpin()
         except discord.Forbidden:
