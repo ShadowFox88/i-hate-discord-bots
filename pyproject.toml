@@ -14,3 +14,4 @@ profile = "black"
 [tool.pyright]
 pythonversion = "^3.12"
 typeCheckingMode = "strict"
+reportIncompatibleMethodOverride = false

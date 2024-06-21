@@ -16,7 +16,6 @@ if typing.TYPE_CHECKING:
 
 
 # TODO: Rethink design with a clear mind
-# TODO: Lock all commands behind the manage messages permission
 class Pinboards(commands.Cog):
     EMOJI_DIGITS = (
         "\N{DIGIT ONE}\N{VARIATION SELECTOR-16}\N{COMBINING ENCLOSING KEYCAP}",
@@ -204,6 +203,9 @@ class Pinboards(commands.Cog):
         assert isinstance(channel, self.PIN_SUPPORTED_CHANNEL_TYPES)
 
         return channel
+
+    def cog_check(self, context: "Context"):
+        return context.channel.permissions_for(context.author).manage_messages
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
