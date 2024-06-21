@@ -1,7 +1,11 @@
 import logging
 import traceback
 
-__all__ = ("error",)
+__all__ = (
+    "info",
+    "error",
+    "format_exception",
+)
 
 
 def info(message: str):
