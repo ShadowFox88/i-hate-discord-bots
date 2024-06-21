@@ -28,8 +28,9 @@
                 "wayou.vscode-todo-highlight"
             ],
             "settings": {
-                "python.pythonPath": "/workspace/.venv/bin/python",
-                "python.defaultInterpreterPath": ".venv/bin/python"
+                "editor.defaultFormatter": "ms-python.black-formatter",
+                "python.defaultInterpreterPath": ".venv/bin/python",
+                "python.pythonPath": "/workspace/.venv/bin/python"
             }
         }
     },
