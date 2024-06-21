@@ -6,7 +6,7 @@ import typing
 import discord
 from discord.ext import commands
 
-from src import checks, database, enums, logs, views
+from src import CONFIGURATION, checks, database, enums, logs, views
 from src.constants import HOME_GUILD_ID
 from src.database import tables
 from src.typings import PinSupportedChannel
@@ -32,8 +32,6 @@ class Pinboards(commands.Cog):
     EMOJI_RIGHT_ARROW = "\N{BLACK RIGHTWARDS ARROW}\N{VARIATION SELECTOR-16}"
     EMOJI_CHECKMARK = "\N{WHITE HEAVY CHECK MARK}"
     EMOJI_CROSS = "\N{CROSS MARK}"
-    # TODO: Make this configurable just in case Discord decideds to change it
-    MAXIMUM_PINNED_MESSAGES_LIMIT = 50
     PIN_SUPPORTED_CHANNEL_TYPES = (
         discord.TextChannel,
         discord.Thread,
@@ -166,7 +164,7 @@ class Pinboards(commands.Cog):
     async def _maybe_process_automated_migration(self, *, channel: PinSupportedChannel):
         pinned_messages = await channel.pins()
 
-        if len(pinned_messages) != self.MAXIMUM_PINNED_MESSAGES_LIMIT:
+        if len(pinned_messages) != CONFIGURATION.MAXIMUM_PINNED_MESSAGES_LIMIT:
             return
 
         configuration = await database.get_configuration()

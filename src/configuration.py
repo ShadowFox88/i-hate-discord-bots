@@ -10,6 +10,7 @@ class Configuration(BaseModel):
     POSTGRES_PASSWORD: str
     TOKEN: str
 
+    MAXIMUM_PINNED_MESSAGES_LIMIT: int = 50
     POSTGRES_DSN: str = ""
     POSTGRES_HOST: str = "localhost:5432"
 
