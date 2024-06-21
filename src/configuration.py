@@ -1,15 +1,10 @@
-import dataclasses
-import inspect
-import typing
-
 import dotenv
+from pydantic import BaseModel
 
 __all__ = ("CONFIGURATION",)
 
 
-# TODO: Make mandatory
-@dataclasses.dataclass
-class Configuration:
+class Configuration(BaseModel):
     POSTGRES_DATABASE: str
     POSTGRES_USER: str
     POSTGRES_PASSWORD: str
@@ -18,10 +13,5 @@ class Configuration:
     POSTGRES_DSN: str = ""
     POSTGRES_HOST: str = "localhost:5432"
 
-    @classmethod
-    def from_dict(cls, raw_environment: dict[str, typing.Any]):
-        return cls(**{key: value for key, value in raw_environment.items() if key in inspect.signature(cls).parameters})
 
-
-raw_configuration = dotenv.dotenv_values()
-CONFIGURATION = Configuration.from_dict(raw_configuration)
+CONFIGURATION = Configuration.model_validate(dotenv.dotenv_values(), strict=True)
