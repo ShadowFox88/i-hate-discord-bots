@@ -9,10 +9,10 @@ from discord.ext import commands
 from src import checks, database, enums, logs, views
 from src.constants import HOME_GUILD_ID
 from src.database import tables
+from src.typings import PinSupportedChannel
 
 if typing.TYPE_CHECKING:
     from src import Bot, Context
-    from src.typings import PinSupportedChannel
 
 
 # TODO: Rethink design with a clear mind
