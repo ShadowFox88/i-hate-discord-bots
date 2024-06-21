@@ -4,6 +4,7 @@ import traceback
 __all__ = (
     "info",
     "error",
+    "warn",
     "format_exception",
 )
 
@@ -19,6 +20,10 @@ def error(error: BaseException, *, message: str = ""):
         logging.error(f"{message}:\n\n{stack}")
     else:
         logging.error(stack)
+
+
+def warn(message: str):
+    logging.warn(message)
 
 
 def format_exception(error: BaseException) -> str:

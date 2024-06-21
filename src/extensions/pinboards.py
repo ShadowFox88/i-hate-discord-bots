@@ -48,7 +48,7 @@ class Pinboards(commands.Cog):
 
         def can_confirm(reaction: discord.Reaction, user: discord.User | discord.Member):
             if isinstance(user, discord.User):
-                print("Ignoring confirmation check as user is not of type discord.Member...")
+                logs.warn("Ignoring confirmation check as user is not of type discord.Member...")
 
                 return False
 
@@ -236,7 +236,7 @@ class Pinboards(commands.Cog):
         channel_ids_found = await database.get_pinboard_channel_ids(linked_channel_id=linked_channel_id)
 
         if not channel_ids_found:
-            print("Ignoring message edit due to no linked channels...")
+            logs.warn("Ignoring message edit due to no linked channels...")
 
             return
 
@@ -246,7 +246,7 @@ class Pinboards(commands.Cog):
             pinboard_channel_found = self.bot.get_channel(id_)
 
             if not (pinboard_channel_found and isinstance(pinboard_channel_found, self.PIN_SUPPORTED_CHANNEL_TYPES)):
-                print(f"Ignoring channel with ID {id_}")
+                logs.warn(f"Ignoring channel with ID {id_}")
 
                 continue
 
@@ -269,23 +269,22 @@ class Pinboards(commands.Cog):
         try:
             await previous_message.unpin()
         except discord.Forbidden:
-            print("Ignoring unpinning message due to lack of permissions...")
+            logs.warn("Ignoring unpinning message due to lack of permissions...")
 
             # TODO: Test this
             await self._maybe_process_automated_migration(channel=channel)
 
     @commands.Cog.listener()
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent):
-        # TODO: Use built-in logging instead
         if payload.guild_id != HOME_GUILD_ID:
-            print("Ignoring message edit in non-home guild...")
+            logs.warn("Ignoring message edit in non-home guild...")
 
             return
 
         channel = await self._maybe_fetch_channel(payload.channel_id)
 
         if not isinstance(channel, self.PIN_SUPPORTED_CHANNEL_TYPES):
-            print("Ignoring message edit in non-text channel...")
+            logs.warn("Ignoring message edit in non-text channel...")
 
             return
 
@@ -294,7 +293,7 @@ class Pinboards(commands.Cog):
                 payload.message_id, cached_message=payload.cached_message, channel=channel
             )
         ):
-            print("Ignoring message edit as unable to compare pin status of non-existant, prior message state...")
+            logs.warn("Ignoring message edit as unable to compare pin status of non-existant, prior message state...")
 
             return
 
