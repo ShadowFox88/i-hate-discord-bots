@@ -9,6 +9,7 @@ from src import logs
 from src.constants import PREFIXES
 
 __all__ = ("Bot",)
+
 INTENTS = discord.Intents(
     guild_messages=True, guild_reactions=True, guilds=True, members=True, message_content=True, reactions=True
 )
