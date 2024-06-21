@@ -4,7 +4,7 @@ arguments=()
 pip install uv
 uv venv
 source .venv/bin/activate
-echo ". .venv/bin/activate" >> $HOME/.bashrc
+echo "source .venv/bin/activate" >> $HOME/.zshrc
 
 if [ -f requirements.dev.txt ]; then
     arguments+="-r requirements.dev.txt "
