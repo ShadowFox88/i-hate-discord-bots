@@ -38,7 +38,7 @@ class GlobalConfiguration(tortoise.Model):
 
 
 class Message(tortoise.Model):
-    id = fields.IntField(unique=True)
+    id = fields.IntField(pk=True, unique=True)
     author_id = fields.IntField()
     channel_id = fields.BigIntField()
     created_at = fields.DatetimeField()
@@ -47,7 +47,7 @@ class Message(tortoise.Model):
 
 
 class DataProtectedUser(tortoise.Model):
-    id = fields.IntField(unique=True)
+    id = fields.IntField(pk=True, unique=True)
 
 
 ALL = (Pinboard, LinkedChannel, GlobalConfiguration, Message, DataProtectedUser)
