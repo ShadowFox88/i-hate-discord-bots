@@ -324,9 +324,6 @@ class Pinboards(commands.Cog):
         description = "\n".join(f"<#{row.channel_id}>" for row in rows)
 
         if not description:
-            # TODO: Create or use a third-party module that allows me to
-            # reference these emojis by name and provides auto-complete instead
-            # of relying on strings that could potentially be misspelled/misremembered
             description = (
                 f"{EMOJIS.CROSS} You do not have any pinboards registered in this server!\n"
                 "\n"
