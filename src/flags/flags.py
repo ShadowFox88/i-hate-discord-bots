@@ -1,5 +1,6 @@
-# TODO: Add logging to notify when individual flags are manipulated
 import typing
+
+from src import logs
 
 type Flag = typing.Literal["NO_DATABASE"]
 
@@ -16,8 +17,11 @@ def is_set(name: Flag):
 
 
 def set(name: Flag):
+    logs.info(f"Set {name}")
+
     flags.add(name)
 
 
 def unset(name: Flag):
+    logs.info(f"Unset {name}")
     flags.remove(name)
