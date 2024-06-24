@@ -6,7 +6,7 @@ import discord
 from discord.ext import commands
 
 from src import logs
-from src.constants import PREFIXES
+from src.constants import HOME_GUILD_ID, PREFIXES
 
 __all__ = ("Bot",)
 
@@ -21,6 +21,8 @@ class Bot(commands.Bot):
             command_prefix=commands.when_mentioned_or(*PREFIXES),
             intents=INTENTS,
         )
+
+        self.home_guild: discord.Guild
 
     async def load_extension(self, name: str, *, package: str | None = None):
         try:
@@ -42,6 +44,11 @@ class Bot(commands.Bot):
             await self.load_extension(module_path)
 
     async def setup_hook(self):
+        if not (home_guild_found := self.get_guild(HOME_GUILD_ID)):
+            raise ValueError(f"Home guild not found with ID {HOME_GUILD_ID}")
+
+        self.home_guild = home_guild_found
+
         await self.load_extensions()
 
         if self.user:

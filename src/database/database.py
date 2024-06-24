@@ -6,13 +6,10 @@ import tortoise
 from src import CONFIGURATION, flags
 from src.errors import CannotConnect
 
-from . import tables
+from . import pinboards, tables  # pyright: ignore[reportUnusedImport]
 
 __all__ = (
     "initialise",
-    "create_pinboard",
-    "get_pinboard_channel_ids",
-    "link_channel_to_pinboard",
     "get_configuration",
     "set_configuration_settings",
     "message_exists_with_id",
@@ -44,20 +41,6 @@ async def initialise():
         flags.set("NO_DATABASE")
 
         raise CannotConnect from error
-
-
-async def create_pinboard(*, channel_id: int):
-    await tables.Pinboard.create(channel_id=channel_id)
-
-
-async def get_pinboard_channel_ids(*, linked_channel_id: int):
-    rows = await tables.LinkedChannel.all().filter(channel_id=linked_channel_id)
-
-    return [row.pinboard_channel_id for row in rows]
-
-
-async def link_channel_to_pinboard(*, channel_id: int, pinboard_channel_id: int):
-    await tables.LinkedChannel.create(channel_id=channel_id, pinboard_channel_id=pinboard_channel_id)
 
 
 async def get_configuration():
