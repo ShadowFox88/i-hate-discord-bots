@@ -1,14 +1,11 @@
-[tool.black.dependencies]
-python = "^3.12"
-
 [tool.black]
-line-length = 125
+line-length = 120
 force-exclude = "__init__.py"
 
 [tool.isort]
 combine_as_imports = true
 combine_star = true
-line_length = 125
+line_length = 120
 profile = "black"
 
 [tool.pyright]

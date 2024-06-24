@@ -22,7 +22,7 @@ type ErrorMessages = tuple[TerminalOutput, UserMessage]
 
 
 class ErrorHandler(commands.Cog):
-    async def on_error(self, error: str, *_args: typing.Any, **_kwargs: typing.Any):
+    async def on_error(self, _error: str, *_args: typing.Any, **_kwargs: typing.Any):
         if real_error_found := sys.exc_info()[1]:
             logs.error(real_error_found, message="An error occurred")
 
@@ -78,7 +78,9 @@ class ErrorHandler(commands.Cog):
 
         return f"{for_terminal}...", None
 
-    def generate_unavailable_feature_messages(self, context: "Context", error: errors.UnavailableFeature) -> ErrorMessages:
+    def generate_unavailable_feature_messages(
+        self, context: "Context", error: errors.UnavailableFeature
+    ) -> ErrorMessages:
         for_terminal, _ = self.generate_ignore_error_messages(error)
         command_name = context.command.qualified_name if context.command else "unavailable"
         unavailable_dependencies = error.message
