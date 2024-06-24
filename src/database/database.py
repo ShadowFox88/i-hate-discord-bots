@@ -8,6 +8,22 @@ from src.errors import CannotConnect
 
 from . import tables
 
+__all__ = (
+    "initialise",
+    "create_pinboard",
+    "get_pinboard_channel_ids",
+    "link_channel_to_pinboard",
+    "get_configuration",
+    "set_configuration_settings",
+    "message_exists_with_id",
+    "is_users_data_protected",
+    "store_message",
+    "get_message",
+    "delete_message",
+    "prune",
+    "close",
+)
+
 
 async def initialise():
     url = CONFIGURATION.POSTGRES_DSN or (

@@ -4,6 +4,8 @@ import discord
 
 from src.constants import EMOJIS
 
+__all__ = ("Delete",)
+
 
 class Delete(discord.ui.View):
     def __init__(self, *, author: discord.Member):

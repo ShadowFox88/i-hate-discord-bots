@@ -4,7 +4,13 @@ from src import logs
 
 type Flag = typing.Literal["NO_DATABASE"]
 
-__all__ = ("Flag", "all", "is_set", "set", "unset")
+__all__ = (
+    "Flag",
+    "all",
+    "is_set",
+    "set",
+    "unset",
+)
 flags: set[Flag] = set()
 
 

@@ -11,6 +11,9 @@ if typing.TYPE_CHECKING:
     from src.typings import Feature
 
 
+__all__ = ("depends_on",)
+
+
 def depends_on(*features_: "Feature"):
     async def predicate(_: Context):
         if "database" in features_ and flags.is_set("NO_DATABASE"):
