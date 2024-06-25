@@ -15,7 +15,6 @@ if typing.TYPE_CHECKING:
     from src import Bot, Context
 
 
-# TODO: Ponder existence
 class GuildMessageCache:
     def __init__(self, guild: discord.Guild):
         self.__guild = guild
@@ -55,7 +54,6 @@ class GuildMessageCache:
             logs.error(error, message=f"Failed to fetch messages for channel with ID {channel_id}")
 
 
-# TODO: Rethink design with a clear mind
 class Pinboards(commands.Cog):
     PIN_SUPPORTED_CHANNEL_TYPES = (
         discord.TextChannel,
@@ -231,7 +229,9 @@ class Pinboards(commands.Cog):
                 return
 
         pinboard_channel_ids = await database.pinboards.get_channel_ids_for(linked_channel_id=channel.id)
-        pinboard_channels = [typing.cast(PinSupportedChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
+        pinboard_channels = [
+            typing.cast(PinSupportedChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids
+        ]
         pages = self._create_pinboard_channel_paginator(pinboard_channels)
 
         await self._prompt_pin_migration_channel(channel=channel, pages=pages, pinboard_channels=pinboard_channels)
@@ -259,7 +259,9 @@ class Pinboards(commands.Cog):
 
         await database.store_message(message)
 
-    async def _maybe_fetch_message(self, id_: int, *, cached_message: discord.Message | None, channel: PinSupportedChannel):
+    async def _maybe_fetch_message(
+        self, id_: int, *, cached_message: discord.Message | None, channel: PinSupportedChannel
+    ):
         try:
             return cached_message or await channel.fetch_message(id_)
         except discord.HTTPException as error:
@@ -377,7 +379,9 @@ class Pinboards(commands.Cog):
             # guaranteed to exist so the typecast is safe
             message_found = typing.cast(
                 discord.Message,
-                await self._maybe_fetch_message(payload.message_id, cached_message=payload.cached_message, channel=channel),
+                await self._maybe_fetch_message(
+                    payload.message_id, cached_message=payload.cached_message, channel=channel
+                ),
             )
 
         try:
@@ -431,7 +435,9 @@ class Pinboards(commands.Cog):
         Assign a channel to an existing pinboard
         """
         await database.pinboards.link_channel(channel_id=channel_to_link.id, pinboard_channel_id=pinboard_channel.id)
-        await context.send(f"Successfully linked {channel_to_link.mention} to the {EMOJIS.PIN}{pinboard_channel.mention}")
+        await context.send(
+            f"Successfully linked {channel_to_link.mention} to the {EMOJIS.PIN}{pinboard_channel.mention}"
+        )
 
     @checks.depends_on("database")
     @commands.command()
@@ -440,7 +446,9 @@ class Pinboards(commands.Cog):
         Migrates all pinned messages in the current channel to a selected pinboard
         """
         pinboard_channel_ids = await database.pinboards.get_channel_ids_for(linked_channel_id=context.channel.id)
-        pinboard_channels = [typing.cast(PinSupportedChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids]
+        pinboard_channels = [
+            typing.cast(PinSupportedChannel, self.bot.get_channel(id_)) for id_ in pinboard_channel_ids
+        ]
 
         assert isinstance(context.channel, self.PIN_SUPPORTED_CHANNEL_TYPES)
 
